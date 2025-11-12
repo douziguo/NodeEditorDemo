@@ -6,7 +6,7 @@
 
 作者：douziguo
 
-![](doc\interface.png)
+![](doc/interface.png)
 
 ## 一、编译
 
@@ -38,3 +38,4 @@ nodeeditorDemo/
 ├── NodeEditorCore.cpp
 ├── NodeEditorCore.h
 └── MReadme.md
+

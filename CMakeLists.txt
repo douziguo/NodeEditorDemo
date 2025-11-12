@@ -32,8 +32,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 # 配置构建
 include_directories(${INC_DIRS})
 
-add_executable(nodeeditor_demo ${SRC_FILES}
-        DataTypes.h)
+add_executable(nodeeditor_demo
+        ${SRC_FILES})
 
 target_link_libraries(nodeeditor_demo
         Qt5::Core Qt5::Widgets Qt5::Gui

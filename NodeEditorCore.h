@@ -11,9 +11,24 @@
 #include <QtNodes/NodeDelegateModelRegistry>
 #include <QObject>
 #include <QJsonObject>
+#include <QVariantMap>
+#include <functional>
 #include <memory>
 
 using namespace QtNodes;
+
+// 定义 InvalidConnectionId 常量
+static const ConnectionId InvalidConnectionId{InvalidNodeId, 0, InvalidNodeId, 0};
+
+// ConnectionId 转换为字符串的辅助函数
+inline QString connectionIdToString(const ConnectionId& conn)
+{
+    return QString("Connection(outNode=%1, outPort=%2, inNode=%3, inPort=%4)")
+        .arg(conn.outNodeId)
+        .arg(conn.outPortIndex)
+        .arg(conn.inNodeId)
+        .arg(conn.inPortIndex);
+}
 
 class NodeEditorCore : public QObject
 {
@@ -29,8 +44,9 @@ public:
     GraphicsView* view() const { return m_view; }
     std::shared_ptr<DataFlowGraphModel> graphModel() const { return m_graphModel; }
 
-    NodeId addNode(const QString& nodeType);
+    NodeId addNode(const QString& nodeType, const QPointF& position = QPointF(0, 0));
     bool removeNode(NodeId nodeId);
+    void setNodePosition(NodeId nodeId, const QPointF& position);
 
     ConnectionId addConnection(NodeId sourceNode, PortIndex sourcePort,
                                NodeId targetNode, PortIndex targetPort);
@@ -38,13 +54,18 @@ public:
 
     QJsonObject saveScene() const;
     bool loadScene(const QJsonObject& json);
+    void clearScene();
 
-    // 新增方法：设置节点位置
-    void setNodePosition(NodeId nodeId, const QPointF& position);
-
-    // 新增方法：获取场景信息
+    bool executeFlow();
+    QVariantMap getExecutionResults() const;
     int nodeCount() const;
     int connectionCount() const;
+
+    using NodeExecutor = std::function<QVariant(NodeId, const QVariantMap&)>;
+    void registerNodeExecutor(const QString& nodeType, NodeExecutor executor);
+
+    bool hasUnsavedChanges() const { return m_isModified; }
+    void setModified(bool modified);
 
 signals:
     void sceneLoaded();
@@ -54,10 +75,17 @@ signals:
     void connectionAdded(ConnectionId connectionId);
     void connectionRemoved(ConnectionId connectionId);
     void modificationChanged(bool modified);
+    void executionStarted();
+    void executionFinished(bool success);
+    void nodeExecuted(NodeId nodeId, QVariant result);
 
 private:
     void registerNodeModels();
+    void registerNodeExecutors();
+    void setupConnections();
     QPointF getNextNodePosition();
+    QList<NodeId> getExecutionOrder() const;
+    QVariant executeNode(NodeId nodeId);
 
 private:
     std::shared_ptr<NodeDelegateModelRegistry> m_registry;
@@ -65,7 +93,10 @@ private:
     DataFlowGraphicsScene* m_scene;
     GraphicsView* m_view;
 
-    int m_nodeCounter = 0; // 用于自动排列节点位置
+    QMap<NodeId, QVariant> m_executionResults;
+    QMap<QString, NodeExecutor> m_nodeExecutors;
+    int m_nodeCounter = 0;
+    bool m_isModified = false;
 };
 
 #endif // NODEEDITORDEMO_NODEEDITORCORE_H

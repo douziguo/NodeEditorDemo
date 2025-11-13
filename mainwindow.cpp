@@ -235,7 +235,7 @@ void MainWindow::setupUI()
 {
     // 设置中心部件
     if (m_editorCore && m_editorCore->view()) {
-        // 关键：确保视图接受拖拽
+
         m_editorCore->view()->setAcceptDrops(false);
         m_editorCore->view()->setDragMode(QGraphicsView::RubberBandDrag);
         m_editorCore->view()->setRenderHint(QPainter::Antialiasing);
